@@ -1,0 +1,16 @@
+domains = AD
+
+[domain/AD]
+auth_provider = krb5
+chpass_provider = krb5
+
+krb5_server = %KRB5_SERVER%
+krb5_realm = %KRB5_REALM%
+
+ldap_sasl_mech = GSSAPI
+ldap_user_object_class = user
+ldap_group_object_class = group
+ldap_user_home_directory = unixHomeDirectory
+ldap_user_principal = userPrincipalName
+ldap_account_expire_policy = ad
+ldap_force_upper_case_realm = true

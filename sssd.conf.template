@@ -1,0 +1,19 @@
+[nss]
+filter_users = root
+filter_groups = root
+
+[pam]
+
+[sssd]
+config_file_version = 2
+services = nss, pam
+
+%DOMAIN%
+
+id_provider = ldap
+ldap_schema = %LDAP_SCHEMA%
+ldap_uri = %LDAP_URI%
+ldap_search_base = %LDAP_SEARCH_BASE%
+
+timeout = 10
+entry_cache_timeout = 300

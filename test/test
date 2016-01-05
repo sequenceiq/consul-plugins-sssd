@@ -1,0 +1,23 @@
+#!/bin/bash -e
+
+TEST_DIR=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
+TEMP_DIR=$TEST_DIR/tmp
+export LOGFILE=$TEMP_DIR/sssd.log
+
+rm -rf $TEMP_DIR
+mkdir -p $TEMP_DIR
+
+PAYLOAD="ad ldap://ldap.mydomain.org rfc2307bis dc=mydomain,dc=org your.ad.example.com EXAMPLE.COM"
+
+. $TEST_DIR/../sssd-setup
+config=$(echo "$(get-sssd-conf $PAYLOAD)" | md5)
+if [[ "47906a696284831ddbec30983250b4c3" != "$config" ]]; then
+    echo "Generated source is different: $config"
+    exit 1
+fi
+
+save-configuration $TEMP_DIR "config"
+if [[ ! -f $TEMP_DIR/sssd.conf ]] || [[ "config" != "$(cat $TEMP_DIR/sssd.conf)" ]]; then
+    echo "Missing or wrong configuration file"
+    exit 1
+fi
