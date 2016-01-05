@@ -1,0 +1,11 @@
+[plugin]
+name = "sssd"
+description = "Initializes and starts SSSD service for centralize user management."
+version = "1.0"
+maintainer_name = "SequenceIQ"
+maintainer_email = "info@sequenceiq.com"
+website_url = "http://github.com/sequenceiq/consul-plugins-sssd"
+
+[plugin.config]
+
+[plugin.compatibility]
