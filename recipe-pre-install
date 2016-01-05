@@ -1,0 +1,10 @@
+#!/bin/bash
+
+: ${LOGFILE:=/tmp/sssd.log}
+
+main(){
+  echo Need implementation
+}
+
+exec &>> "$LOGFILE"
+[[ "$0" == "$BASH_SOURCE" ]] && main "$@"
