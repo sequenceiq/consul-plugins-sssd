@@ -24,11 +24,18 @@ save-configuration(){
     echo "$2" > $1/sssd.conf
 }
 
+debug(){
+  echo "[DEBUG] $*" >> $LOGFILE
+}
+
 main(){
-    #exec &>> "$LOGFILE"
+    debug "Install packages"
     yum install -y sssd
+    debug "Generate and persist config file"
     save-configuration /etc/sssd "$(get-sssd-conf $PAYLOAD)"
+    debug "Reconfigure existing service(s)"
     sed -i "s/initgroups: files/initgroups: files sss/" /etc/nsswitch.conf
+    debug "Start SSSD service"
     service sssd start
 }
 
