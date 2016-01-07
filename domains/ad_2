@@ -3,10 +3,7 @@ domains = AD2
 [domain/AD2]
 auth_provider = none
 
-krb5_server = %KRB5_SERVER%
-krb5_realm = %KRB5_REALM%
-
-ldap_default_bind_dn = CN=ldap,CN=Managed Service Accounts,DC=harry,DC=inc
+ldap_default_bind_dn = %BIND_DN%
 ldap_default_authtok_type = password
 ldap_default_authtok = ldappw
 

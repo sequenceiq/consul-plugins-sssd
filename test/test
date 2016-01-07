@@ -12,7 +12,7 @@ PAYLOAD="ad ldap://ldap.mydomain.org rfc2307bis dc=eample,dc=com your.ad.example
 . $TEST_DIR/../sssd-setup
 config=$(echo "$(get-sssd-conf $PAYLOAD)")
 hash=$(echo "$config" | md5)
-if [[ "df3994476a977bd64d92779d18d948b5" != $hash ]]; then
+if [[ "5693445cb699d0bf834642ca5e2e711f" != $hash ]]; then
     echo "Generated source is invalid: $hash"
     echo "$config"
     exit 1
