@@ -7,12 +7,14 @@ export LOGFILE=$TEMP_DIR/sssd.log
 rm -rf $TEMP_DIR
 mkdir -p $TEMP_DIR
 
-PAYLOAD="ad ldap://ldap.mydomain.org rfc2307bis dc=mydomain,dc=org your.ad.example.com EXAMPLE.COM"
+PAYLOAD="ad ldap://ldap.mydomain.org rfc2307bis dc=eample,dc=com your.ad.example.com your.kdc.example.com EXAMPLE.COM"
 
 . $TEST_DIR/../sssd-setup
-config=$(echo "$(get-sssd-conf $PAYLOAD)" | md5)
-if [[ "47906a696284831ddbec30983250b4c3" != "$config" ]]; then
-    echo "Generated source is different: $config"
+config=$(echo "$(get-sssd-conf $PAYLOAD)")
+hash=$(echo "$config" | md5)
+if [[ "df3994476a977bd64d92779d18d948b5" != $hash ]]; then
+    echo "Generated source is invalid: $hash"
+    echo "$config"
     exit 1
 fi
 

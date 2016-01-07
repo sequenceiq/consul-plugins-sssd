@@ -14,3 +14,5 @@ ldap_user_home_directory = unixHomeDirectory
 ldap_user_principal = userPrincipalName
 ldap_account_expire_policy = ad
 ldap_force_upper_case_realm = true
+
+ldap_search_base = %LDAP_SEARCH_BASE%

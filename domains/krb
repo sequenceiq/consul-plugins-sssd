@@ -9,3 +9,5 @@ krb5_realm = %KRB5_REALM%
 
 ; tls_reqcert = demand
 ; ldap_tls_cacert = /etc/pki/tls/certs/ca-bundle.crt
+
+ldap_search_base = %LDAP_SEARCH_BASE%
