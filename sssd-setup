@@ -2,13 +2,13 @@
 
 : ${LOGFILE:=/tmp/sssd.log}
 
-CONF_LOCATION=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
+CONF_LOCATION="$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/conf"
   
 get-sssd-conf(){
     declare desc="Generates sssd.conf file by the given arguments"
     declare kind=$1 uri=${2} schema=${3} search=${4} ad_server=${5} bind_dn=${6} krb5_server=${7} krb5_realm=${8}
     
-    local domain=$(<$CONF_LOCATION/domains/$kind)
+    local domain=$(<$CONF_LOCATION/$kind)
     local template=$(awk -v d="${domain//$'\n'/\\n}" '{gsub("%DOMAIN%", d)}1' $CONF_LOCATION/sssd.conf.template)
     template=${template//%LDAP_URI%/$uri}
     template=${template//%LDAP_SCHEMA%/$schema}
@@ -32,17 +32,19 @@ debug(){
 
 main(){
     debug "Install packages"
-    yum install -y sssd
+    yum install -y sssd openssh-server
     debug "Generate and persist config file"
     save-configuration /etc/sssd "$(get-sssd-conf $PAYLOAD)"
     chown root:root /etc/sssd/sssd.conf
     chmod 0600 /etc/sssd/sssd.conf
     # debug "Reconfigure existing service(s)"
     # sed -i "s/initgroups: files/initgroups: files sss/" /etc/nsswitch.conf
-    debug "Start SSSD service"
-    service sssd start
-    debug "Enable SSSD daemon on startup"
-    systemctl enable sssd
+    debug "Generate ssh keys"
+    ssh-keygen -A
+    debug "Start sshd"
+    sshd -D
+    debug "Start sssd"
+    sssd
 }
 
 [[ "$0" == "$BASH_SOURCE" ]] && main "$@" || true

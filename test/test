@@ -23,3 +23,5 @@ if [[ ! -f $TEMP_DIR/sssd.conf ]] || [[ "config" != "$(cat $TEMP_DIR/sssd.conf)"
     echo "Missing or wrong configuration file"
     exit 1
 fi
+
+# export PAYLOAD="ad_2 ldap://ldap.mydomain.org ad dc=eample,dc=com your.ad.example.com CN=ldap,CN=Managed\ Service\ Accounts,DC=harry,DC=inc"
