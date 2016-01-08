@@ -6,5 +6,6 @@ auth_provider = none
 ldap_default_bind_dn = %BIND_DN%
 ldap_default_authtok_type = password
 ldap_default_authtok = ldappw
+ldap_id_mapping = True
 
 ad_server = %AD_SERVER%

@@ -8,6 +8,7 @@ krb5_server = %KRB5_SERVER%
 krb5_realm = %KRB5_REALM%
 
 ldap_sasl_mech = GSSAPI
+ldap_id_mapping = True
 ldap_user_object_class = user
 ldap_group_object_class = group
 ldap_user_home_directory = unixHomeDirectory

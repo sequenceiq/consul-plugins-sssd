@@ -4,24 +4,21 @@ filter_groups = root
 reconnection_retries = 3
 entry_cache_timeout = 300
 entry_cache_nowait_percentage = 75
-debug_level = 5
-
-[pam]
+debug_level = 7
 
 [sssd]
 config_file_version = 2
 services = nss
-; services = nss, pam
 
 %DOMAIN%
 
 id_provider = ldap
 ldap_uri = %LDAP_URI%
 ldap_schema = %LDAP_SCHEMA%
-ldap_id_mapping = True
 
 min_id = 1000
 timeout = 10
 entry_cache_timeout = 300
 cache_credentials = true
 ldap_referrals = false
+debug_level = 7
