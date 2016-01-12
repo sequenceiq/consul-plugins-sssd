@@ -42,7 +42,7 @@ main(){
     debug "Generate ssh keys"
     ssh-keygen -A
     debug "Start sshd"
-    /usr/sbin/sshd -D
+    /usr/sbin/sshd
     debug "Start sssd"
     sssd
 }
