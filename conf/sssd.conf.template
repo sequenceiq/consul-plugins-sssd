@@ -4,7 +4,7 @@ filter_groups = root
 reconnection_retries = 3
 entry_cache_timeout = 300
 entry_cache_nowait_percentage = 75
-debug_level = 7
+debug_level = 5
 
 [sssd]
 config_file_version = 2
@@ -21,4 +21,4 @@ timeout = 10
 entry_cache_timeout = 300
 cache_credentials = true
 ldap_referrals = false
-debug_level = 7
+debug_level = 6

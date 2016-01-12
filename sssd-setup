@@ -37,8 +37,8 @@ main(){
     save-configuration /etc/sssd "$(get-sssd-conf $PAYLOAD)"
     chown root:root /etc/sssd/sssd.conf
     chmod 0600 /etc/sssd/sssd.conf
-    # debug "Reconfigure existing service(s)"
-    # sed -i "s/initgroups: files/initgroups: files sss/" /etc/nsswitch.conf
+    debug "Reconfigure existing service(s)"
+    sed -i "s/initgroups: files/initgroups: files sss/" /etc/nsswitch.conf
     debug "Generate ssh keys"
     ssh-keygen -A
     debug "Start sshd"
