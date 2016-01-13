@@ -39,12 +39,13 @@ main(){
     chmod 0600 /etc/sssd/sssd.conf
     debug "Reconfigure existing service(s)"
     sed -i "s/initgroups: files/initgroups: files sss/" /etc/nsswitch.conf
+    sed -i "s/#Port 22/Port 2022/" /etc/ssh/sshd_config
     debug "Generate ssh keys"
     ssh-keygen -A
     debug "Start sshd"
     /usr/sbin/sshd
     debug "Start sssd"
-    sssd
+    sssd --daemon
 }
 
 [[ "$0" == "$BASH_SOURCE" ]] && main "$@" || true
