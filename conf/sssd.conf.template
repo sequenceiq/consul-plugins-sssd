@@ -29,7 +29,7 @@ ldap_schema = %LDAP_SCHEMA%
 
 min_id = 1000
 timeout = 10
+ldap_network_timeout = 3
 entry_cache_timeout = 300
-cache_credentials = true
 ldap_referrals = false
 debug_level = 6

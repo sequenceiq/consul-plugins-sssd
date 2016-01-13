@@ -32,11 +32,13 @@ debug(){
 
 main(){
     debug "Install packages"
-    yum install -y sssd openssh-server
+    yum install -y sssd openssh-server authconfig
     debug "Generate and persist config file"
     save-configuration /etc/sssd "$(get-sssd-conf $PAYLOAD)"
     chown root:root /etc/sssd/sssd.conf
     chmod 0600 /etc/sssd/sssd.conf
+    debug "Reconfigure auth"
+    authconfig --enablesssd --enablesssdauth --enablelocauthorize --enablemkhomedir --enablecachecreds --updateall
     debug "Reconfigure existing service(s)"
     sed -i "s/#initgroups: files/initgroups: files sss/" /etc/nsswitch.conf
     sed -i "s/#Port 22/Port 2022/" /etc/ssh/sshd_config

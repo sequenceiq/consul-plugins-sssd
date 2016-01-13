@@ -3,4 +3,5 @@ domains = LDAP
 [domain/LDAP]
 auth_provider = ldap
 
+enumerate = true
 ldap_search_base = %LDAP_SEARCH_BASE%
