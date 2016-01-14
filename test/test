@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 TEST_DIR=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
 TEMP_DIR=$TEST_DIR/tmp
@@ -12,7 +12,7 @@ PAYLOAD="ad ldap://ldap.mydomain.org rfc2307bis dc=eample,dc=com your.ad.example
 . $TEST_DIR/../sssd-setup
 config=$(echo "$(get-sssd-conf $PAYLOAD)")
 hash=$(echo "$config" | md5)
-if [[ "6dd0800ea3f8127c3b89fe9c4b7c2e9a" != $hash ]]; then
+if [[ "b22b6023891807b416d5baaceda280c1" != $hash ]]; then
     echo "Generated source is invalid: $hash"
     echo "$config"
     exit 1
@@ -22,4 +22,19 @@ save-configuration $TEMP_DIR "config"
 if [[ ! -f $TEMP_DIR/sssd.conf ]] || [[ "config" != "$(cat $TEMP_DIR/sssd.conf)" ]]; then
     echo "Missing or wrong configuration file"
     exit 1
+fi
+
+ssh-keygen -t rsa -N "" -f $TEMP_DIR/id_rsa
+cp $TEMP_DIR/id_rsa.pub $TEMP_DIR/authorized_keys
+docker run --name sssd-ldap -e "SLAPD_PASSWORD=passwd" -d mhmxs/ldap
+docker run --name sssd-centos --link sssd-ldap:ldap -e "PAYLOAD=ldap ldap://ldap rfc2307 dc=nodomain" -v $TEMP_DIR:/etc/skel/.ssh -dit centos
+docker exec sssd-centos bash -c "yum update -y && yum install -y git && git clone https://github.com/sequenceiq/consul-plugins-sssd.git && cd consul-plugins-sssd && ./sssd-setup"
+docker exec sssd-centos bash -c "mkdir /home/binduser && cp -r /etc/skel/.ssh /home/binduser && chown -R binduser:bindgroup /home/binduser"
+IP=$(docker inspect -f "{{.NetworkSettings.IPAddress}}" sssd-centos)
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no binduser:bindpassword@$IP -p 2022 -i $TEMP_DIR/id_rsa 'touch ok'
+if [[ 0 -ne $? ]]; then
+    echo "Something went wrong during integration test, containers are available"
+    exit 1
+else
+    docker rm -f sssd-centos sssd-ldap
 fi
