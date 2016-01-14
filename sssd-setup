@@ -47,7 +47,7 @@ main(){
     debug "Start sshd"
     /usr/sbin/sshd
     debug "Start sssd"
-    sssd --daemon
+    sssd --daemon --debug-to-files
 }
 
 [[ "$0" == "$BASH_SOURCE" ]] && main "$@" || true
