@@ -26,15 +26,15 @@ fi
 
 ssh-keygen -t rsa -N "" -f $TEMP_DIR/id_rsa
 cp $TEMP_DIR/id_rsa.pub $TEMP_DIR/authorized_keys
-docker run --name sssd-ldap -e "SLAPD_PASSWORD=passwd" -d mhmxs/ldap
-docker run --name sssd-centos --link sssd-ldap:ldap -e "PAYLOAD=ldap ldap://ldap rfc2307 dc=nodomain" -v $TEMP_DIR:/etc/skel/.ssh -dit centos
-docker exec sssd-centos bash -c "yum update -y && yum install -y git && git clone https://github.com/sequenceiq/consul-plugins-sssd.git && cd consul-plugins-sssd && ./sssd-setup"
-docker exec sssd-centos bash -c "mkdir /home/binduser && cp -r /etc/skel/.ssh /home/binduser && chown -R binduser:bindgroup /home/binduser"
-IP=$(docker inspect -f "{{.NetworkSettings.IPAddress}}" sssd-centos)
+docker run --name sssd-test-ldap -e "SLAPD_PASSWORD=passwd" -d mhmxs/ldap
+docker run --name sssd-test-centos --link sssd-test-ldap:ldap -e "PAYLOAD=ldap ldap://ldap rfc2307 dc=nodomain" -v $TEMP_DIR:/etc/skel/.ssh -dit centos
+docker exec sssd-test-centos bash -c "yum update -y && yum install -y git && git clone https://github.com/sequenceiq/consul-plugins-sssd.git && cd consul-plugins-sssd && ./sssd-setup"
+docker exec sssd-test-centos bash -c "mkdir /home/binduser && cp -r /etc/skel/.ssh /home/binduser && chown -R binduser:bindgroup /home/binduser"
+IP=$(docker inspect -f "{{.NetworkSettings.IPAddress}}" sssd-test-centos)
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no binduser:bindpassword@$IP -p 2022 -i $TEMP_DIR/id_rsa 'touch ok'
 if [[ 0 -ne $? ]]; then
     echo "Something went wrong during integration test, containers are available"
     exit 1
 else
-    docker rm -f sssd-centos sssd-ldap
+    docker rm -f sssd-test-centos sssd-test-ldap
 fi
