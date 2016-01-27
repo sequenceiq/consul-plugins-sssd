@@ -1,15 +1,14 @@
 #!/bin/bash
 
 : ${LOGFILE:=/tmp/sssd.log}
+: ${BRANCH:=master}
 
-CONF_LOCATION="$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/conf"
-  
-get-sssd-conf(){
+ get-sssd-conf(){
     declare desc="Generates sssd.conf file by the given arguments"
     declare kind=$1 uri=${2} schema=${3} search=${4} ad_server=${5} bind_dn=${6} krb5_server=${7} krb5_realm=${8}
     
-    local domain=$(<$CONF_LOCATION/$kind)
-    local template=$(awk -v d="${domain//$'\n'/\\n}" '{gsub("%DOMAIN%", d)}1' $CONF_LOCATION/sssd.conf.template)
+    local domain=$(curl -s https://raw.githubusercontent.com/sequenceiq/consul-plugins-sssd/$BRANCH/conf/$kind)
+    local template=$(awk -v d="${domain//$'\n'/\\n}" '{gsub("%DOMAIN%", d)}1' <(curl -s https://raw.githubusercontent.com/sequenceiq/consul-plugins-sssd/$BRANCH/conf/sssd.conf.template))
     template=${template//%LDAP_URI%/$uri}
     template=${template//%LDAP_SCHEMA%/$schema}
     template=${template//%LDAP_SEARCH_BASE%/$search}
