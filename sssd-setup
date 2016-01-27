@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 : ${LOGFILE:=/tmp/sssd.log}
 
@@ -42,12 +42,14 @@ main(){
     debug "Reconfigure existing service(s)"
     sed -i "s/#initgroups: files/initgroups: files sss/" /etc/nsswitch.conf
     sed -i "s/#Port 22/Port 2022/" /etc/ssh/sshd_config
-    debug "Generate ssh keys"
+    debug "Generate missing ssh keys"
     ssh-keygen -A
-    debug "Start sshd"
-    /usr/sbin/sshd
-    debug "Start sssd"
-    sssd --daemon --debug-to-files
+    debug "Start and enable sshd"
+    systemctl enable sshd
+    systemctl restart sshd || /usr/sbin/sshd
+    debug "Start and enable sssd"
+    systemctl enable sssd
+    systemctl start sssd || sssd --daemon --debug-to-files
 }
 
 [[ "$0" == "$BASH_SOURCE" ]] && main "$@" || true
