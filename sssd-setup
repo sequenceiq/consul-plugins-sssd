@@ -46,10 +46,12 @@ main(){
     ssh-keygen -A
     debug "Start and enable sshd"
     systemctl enable sshd
-    systemctl restart sshd || /usr/sbin/sshd
+    systemctl restart sshd || debug "Systemd not available start sshd in fallback mode" || /usr/sbin/sshd
     debug "Start and enable sssd"
     systemctl enable sssd
-    systemctl start sssd || sssd --daemon --debug-to-files
+    systemctl start sssd || debug "Systemd not available start sssd in fallback mode" || sssd --daemon --debug-to-files
+    debug "Remove login blocker"
+    rm -f /run/nologin
 }
 
 [[ "$0" == "$BASH_SOURCE" ]] && main "$@" || true
