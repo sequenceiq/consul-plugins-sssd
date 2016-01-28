@@ -55,4 +55,4 @@ main(){
 
 [[ "$0" == "$BASH_SOURCE" ]] && main "$@" || true
 
-debug "sssd configuration finished"
+debug "Sssd configuration finished"
