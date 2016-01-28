@@ -3,10 +3,7 @@
 : ${LOGFILE:=/tmp/sssd.log}
 : ${BRANCH:=master}
 
-touch /running
-
  get-sssd-conf(){
-     touch /conf
     declare desc="Generates sssd.conf file by the given arguments"
     declare kind=$1 uri=${2} schema=${3} search=${4} ad_server=${5} bind_dn=${6} krb5_server=${7} krb5_realm=${8}
     
@@ -22,7 +19,6 @@ touch /running
 }
 
 save-configuration(){
-    touch /save
     declare desc="Persists configuration to disk"
     declare location=$1 content="$2"
     mkdir -p $1
@@ -34,7 +30,6 @@ debug(){
 }
 
 main(){
-    touch /main
     debug "Install packages"
     yum install -y sssd openssh-server authconfig
     debug "Generate and persist config file"
@@ -59,5 +54,3 @@ main(){
 }
 
 [[ "$0" == "$BASH_SOURCE" ]] && main "$@" || true
-
-touch /donee
