@@ -31,7 +31,7 @@ docker run --name sssd-test-centos --link sssd-test-ldap:ldap -e "PAYLOAD=ldap l
 docker exec sssd-test-centos bash -c "yum update -y && yum install -y git && git clone https://github.com/sequenceiq/consul-plugins-sssd.git && cd consul-plugins-sssd && ./sssd-setup"
 docker exec sssd-test-centos bash -c "mkdir /home/binduser && cp -r /etc/skel/.ssh /home/binduser && chown -R binduser:bindgroup /home/binduser"
 IP=$(docker inspect -f "{{.NetworkSettings.IPAddress}}" sssd-test-centos)
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no binduser:bindpassword@$IP -p 2022 -i $TEMP_DIR/id_rsa 'touch ok'
+docker run -ti -v $TEMP_DIR:/root/.ssh trsouz/ssh binduser@$IP -p 2022 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "touch ok"
 if [[ 0 -ne $? ]]; then
     echo "Something went wrong during integration test, containers are available"
     exit 1
