@@ -47,7 +47,7 @@ main(){
     systemctl enable sshd
     systemctl restart sshd || debug "Systemd not available start sshd in fallback mode" && /usr/sbin/sshd
     debug "Start and enable user sessions"
-    mkdir /etc/systemd/system/sssd.service.requires
+    mkdir -p /etc/systemd/system/sssd.service.requires
     ln -s /usr/lib/systemd/system/systemd-user-sessions.service /etc/systemd/system/sssd.service.requires
     systemctl start systemd-user-sessions || debug "Systemd not available allow login in a different way" && rm -f /run/nologin
     debug "Start and enable sssd"
