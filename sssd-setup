@@ -25,6 +25,23 @@ save-configuration(){
     echo "$2" > $1/sssd.conf
 }
 
+install-yeslogin() {
+    cat > /etc/systemd/system/yeslogin.service << EOF
+[Install]
+WantedBy=multi-user.target
+
+[Unit]
+Description=Removes /run/nologin
+After=network.service
+Wants=network.service
+
+[Service]
+Type=oneshot
+Restart=no
+ExecStart=/usr/bin/rm -f /run/nologin
+EOF
+}
+
 debug(){
   echo "[DEBUG] $*" >> $LOGFILE
 }
@@ -50,7 +67,9 @@ main(){
     systemctl enable sssd
     systemctl start sssd || debug "Systemd not available start sssd in fallback mode" && sssd --daemon --debug-to-files
     debug "Remove login blocker"
-    rm -f /run/nologin
+    install-yeslogin
+    systemctl enable yeslogin
+    systemctl start yeslogin || debug "Systemd not available start yeslogin in fallback mode" && rm -f /run/nologin
 }
 
 [[ "$0" == "$BASH_SOURCE" ]] && main "$@" || true
