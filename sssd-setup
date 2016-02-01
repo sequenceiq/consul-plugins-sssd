@@ -25,23 +25,6 @@ save-configuration(){
     echo "$2" > $1/sssd.conf
 }
 
-install-yeslogin() {
-    cat > /etc/systemd/system/yeslogin.service << EOF
-[Install]
-WantedBy=multi-user.target
-
-[Unit]
-Description=Removes /run/nologin
-After=network.service
-Wants=network.service
-
-[Service]
-Type=oneshot
-Restart=no
-ExecStart=/usr/bin/rm -f /run/nologin
-EOF
-}
-
 debug(){
   echo "[DEBUG] $*" >> $LOGFILE
 }
@@ -63,13 +46,13 @@ main(){
     debug "Start and enable sshd"
     systemctl enable sshd
     systemctl restart sshd || debug "Systemd not available start sshd in fallback mode" && /usr/sbin/sshd
+    debug "Start and enable user sessions"
+    mkdir /etc/systemd/system/sssd.service.requires
+    ln -s /usr/lib/systemd/system/systemd-user-sessions.service /etc/systemd/system/sssd.service.requires
+    systemctl start systemd-user-sessions || debug "Systemd not available allow login in a different way" && rm -f /run/nologin
     debug "Start and enable sssd"
     systemctl enable sssd
     systemctl start sssd || debug "Systemd not available start sssd in fallback mode" && sssd --daemon --debug-to-files
-    debug "Remove login blocker"
-    install-yeslogin
-    systemctl enable yeslogin
-    systemctl start yeslogin || debug "Systemd not available start yeslogin in fallback mode" && rm -f /run/nologin
 }
 
 [[ "$0" == "$BASH_SOURCE" ]] && main "$@" || true
