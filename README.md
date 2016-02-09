@@ -51,4 +51,4 @@ Other useful SSSD configurations:
 [ldap_user_search_base]
 [ldap_group_search_base]
 
-For more details how to configure SSSD please visit the user manuals: (sssd)[http://linux.die.net/man/5/sssd.conf], (LDAP)[http://linux.die.net/man/5/sssd-ldap], (Active Directory)[http://linux.die.net/man/5/sssd-ad]
+For more details how to configure SSSD please visit the user manuals: [sssd](http://linux.die.net/man/5/sssd.conf), [LDAP](http://linux.die.net/man/5/sssd-ldap), [Active Directory](http://linux.die.net/man/5/sssd-ad)

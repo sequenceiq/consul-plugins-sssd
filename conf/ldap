@@ -1,7 +1,5 @@
 domains = LDAP
 
 [domain/LDAP]
+id_provider = ldap
 auth_provider = ldap
-
-enumerate = true
-ldap_search_base = %LDAP_SEARCH_BASE%

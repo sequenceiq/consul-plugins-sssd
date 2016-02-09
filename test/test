@@ -7,7 +7,7 @@ export LOGFILE=$TEMP_DIR/sssd.log
 rm -rf $TEMP_DIR
 mkdir -p $TEMP_DIR
 
-PAYLOAD="ad ldap://ldap.mydomain.org rfc2307bis dc=eample,dc=com your.ad.example.com - your.kdc.example.com EXAMPLE.COM"
+PAYLOAD="ad ldap://ldap.mydomain.org rfc2307bis dc=eample,dc=com your.kdc.example.com EXAMPLE.COM"
 
 . $TEST_DIR/../sssd-setup
 config=$(echo "$(get-sssd-conf $PAYLOAD)")
