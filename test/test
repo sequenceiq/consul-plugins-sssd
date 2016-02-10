@@ -7,14 +7,20 @@ export LOGFILE=$TEMP_DIR/sssd.log
 rm -rf $TEMP_DIR
 mkdir -p $TEMP_DIR
 
-PAYLOAD="ad ldap://ldap.mydomain.org rfc2307bis dc=eample,dc=com your.kdc.example.com EXAMPLE.COM"
+SOURCE_DIR=$(cd `dirname "$TEST_DIR/../sssd-setup"` && pwd)
+. $SOURCE_DIR/sssd-setup
 
-. $TEST_DIR/../sssd-setup
-config=$(echo "$(get-sssd-conf $PAYLOAD)")
-hash=$(echo "$config" | md5)
-if [[ "b22b6023891807b416d5baaceda280c1" != $hash ]]; then
-    echo "Generated source is invalid: $hash"
-    echo "$config"
+config=$(echo "$(get-sssd-conf '%LDAP_URI%%LDAP_SCHEMA%%LDAP_SEARCH_BASE%%KRB5_SERVER%%KRB5_REALM%' ldap://ldap.mydomain.org rfc2307bis dc=eample,dc=com your.kdc.example.com EXAMPLE.COM)")
+if [[ "ldap://ldap.mydomain.orgrfc2307bisdc=eample,dc=comyour.kdc.example.comEXAMPLE.COM" != $config ]]; then
+    echo "Generated source is invalid: $config"
+    exit 1
+fi
+
+template=$(echo "$(get-template ad)")
+hash=$(echo "$template" | md5)
+if [[ "291d18458d52652e655eac1673ffb7b0" != $hash ]]; then
+    echo "Template is invalid: $hash"
+    echo "$template"
     exit 1
 fi
 
@@ -26,12 +32,12 @@ fi
 
 ssh-keygen -t rsa -N "" -f $TEMP_DIR/id_rsa
 cp $TEMP_DIR/id_rsa.pub $TEMP_DIR/authorized_keys
-docker run --name sssd-test-ldap -e "SLAPD_PASSWORD=passwd" -d sequenceiq/docker-ldap:1.0
-docker run --name sssd-test-centos --link sssd-test-ldap:ldap -e "PAYLOAD=ldap ldap://ldap rfc2307 dc=nodomain" -v $TEMP_DIR:/etc/skel/.ssh -dit centos
-docker exec sssd-test-centos bash -c "yum update -y && yum install -y git && git clone https://github.com/sequenceiq/consul-plugins-sssd.git && cd consul-plugins-sssd && ./sssd-setup"
+docker run --name sssd-test-ldap --label test -e "SLAPD_PASSWORD=passwd" -d sequenceiq/docker-ldap:1.0
+docker run --name sssd-test-centos --label test --link sssd-test-ldap:ldap -e "PAYLOAD=ldap ldap://ldap rfc2307 dc=nodomain" -e "BRANCH=" -v $SOURCE_DIR:/consul-plugins-sssd -v $TEMP_DIR:/etc/skel/.ssh -dt centos
+docker exec sssd-test-centos bash -c "yum update -y && /consul-plugins-sssd/sssd-setup"
 docker exec sssd-test-centos bash -c "mkdir /home/binduser && cp -r /etc/skel/.ssh /home/binduser && chown -R binduser:bindgroup /home/binduser"
 IP=$(docker inspect -f "{{.NetworkSettings.IPAddress}}" sssd-test-centos)
-docker run -ti -v $TEMP_DIR:/root/.ssh trsouz/ssh binduser@$IP -p 2022 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "touch ok"
+docker run -v $TEMP_DIR:/root/.ssh -it sequenceiq/alpine-dev:3.3 ssh binduser@$IP -p 2022 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "touch ok"
 if [[ 0 -ne $? ]]; then
     echo "Something went wrong during integration test, containers are available"
     exit 1

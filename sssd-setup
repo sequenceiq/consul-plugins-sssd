@@ -1,14 +1,14 @@
 #!/bin/bash
 
 : ${LOGFILE:=/tmp/sssd.log}
-: ${BRANCH:=master}
+: ${BRANCH=master}
+
+CONF_LOCATION="$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/conf"
 
  get-sssd-conf(){
-    declare desc="Generates sssd.conf file by the given arguments"
-    declare kind=${1} uri=${2} schema=${3} search=${4} krb5_server=${5} krb5_realm=${6}
+    declare desc="Generates sssd.conf file by the given template"
+    declare template="${1}" uri=${2} schema=${3} search=${4} krb5_server=${5} krb5_realm=${6}
     
-    local domain=$(curl -s https://raw.githubusercontent.com/sequenceiq/consul-plugins-sssd/$BRANCH/conf/$kind)
-    local template=$(awk -v d="${domain//$'\n'/\\n}" '{gsub("%DOMAIN%", d)}1' <(curl -s https://raw.githubusercontent.com/sequenceiq/consul-plugins-sssd/$BRANCH/conf/sssd.conf.template))
     template=${template//%LDAP_URI%/$uri}
     template=${template//%LDAP_SCHEMA%/$schema}
     template=${template//%LDAP_SEARCH_BASE%/$search}
@@ -16,9 +16,32 @@
     echo "${template//%KRB5_REALM%/$krb5_realm}"
 }
 
+get-template(){
+    declare desc="Resolve the right template"
+    declare kind=${1} branch=${2}
+    
+    local domain
+    if [ -z $branch ]; then
+        domain=$(<$CONF_LOCATION/$kind)
+    else
+        domain=$(curl -s https://raw.githubusercontent.com/sequenceiq/consul-plugins-sssd/$branch/conf/$kind)
+    fi
+    domain="${domain//$'\n'/\\n}"
+    
+    local template
+    local gsub='{gsub("%DOMAIN%", d)}1'
+    if [ -z $branch ]; then
+        template=$(awk -v d="${domain}" "${gsub}" $CONF_LOCATION/sssd.conf.template)
+    else
+        template=$(awk -v d="${domain}" "${gsub}" <(curl -s https://raw.githubusercontent.com/sequenceiq/consul-plugins-sssd/$branch/conf/sssd.conf.template))
+    fi
+    echo "$template"
+}
+
 save-configuration(){
     declare desc="Persists configuration to disk"
     declare location=$1 content="$2"
+    
     mkdir -p $1
     echo "$2" > $1/sssd.conf
 }
@@ -31,11 +54,14 @@ main(){
     debug "Install packages"
     yum install -y sssd openssh-server authconfig
     debug "Generate and persist config file"
-    save-configuration /etc/sssd "$(get-sssd-conf $PAYLOAD)"
+    local kind=$(echo "$PAYLOAD" | cut -d" " -f 1)
+    local template=$(get-template $kind $BRANCH)
+    local config=$(get-sssd-conf "$template" $(echo "$PAYLOAD" | sed "s/^$kind //"))
+    save-configuration /etc/sssd "$config"
     chown root:root /etc/sssd/sssd.conf
     chmod 0600 /etc/sssd/sssd.conf
     debug "Reconfigure auth"
-    authconfig --enablesssd --enablesssdauth --enablelocauthorize --enablemkhomedir --enablecachecreds --updateall
+    authconfig --enablesssd --enablesssdauth --enablelocauthorize --enablemkhomedir --enablecachecreds --update
     debug "Reconfigure existing service(s)"
     sed -i "s/#initgroups: files/initgroups: files sss/" /etc/nsswitch.conf
     sed -i "s/#Port 22/Port 2022/" /etc/ssh/sshd_config
@@ -46,7 +72,7 @@ main(){
     systemctl restart sshd || debug "Systemd not available start sshd in fallback mode" && /usr/sbin/sshd
     debug "Start and enable user sessions"
     mkdir -p /etc/systemd/system/sssd.service.requires
-    ln -s /usr/lib/systemd/system/systemd-user-sessions.service /etc/systemd/system/sssd.service.requires
+    ln -s /usr/lib/systemd/system/systemd-user-sessions.service /etc/systemd/system/sssd.service.requires/systemd-user-sessions.service
     systemctl start systemd-user-sessions || debug "Systemd not available allow login in a different way" && rm -f /run/nologin
     debug "Start and enable sssd"
     systemctl enable sssd
