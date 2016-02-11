@@ -4,8 +4,7 @@ TEST_DIR=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
 TEMP_DIR=$TEST_DIR/tmp
 export LOGFILE=$TEMP_DIR/sssd.log
 
-rm -rf $TEMP_DIR
-mkdir -p $TEMP_DIR
+rm -rf $TEMP_DIR && mkdir -p -m a-rwx,u+wrx $TEMP_DIR
 
 SOURCE_DIR=$(cd `dirname "$TEST_DIR/../sssd-setup"` && pwd)
 . $SOURCE_DIR/sssd-setup
@@ -30,14 +29,17 @@ if [[ ! -f $TEMP_DIR/sssd.conf ]] || [[ "config" != "$(cat $TEMP_DIR/sssd.conf)"
     exit 1
 fi
 
+docker rm -f sssd-test-centos sssd-test-ldap || :
+
 ssh-keygen -t rsa -N "" -f $TEMP_DIR/id_rsa
 cp $TEMP_DIR/id_rsa.pub $TEMP_DIR/authorized_keys
 docker run --name sssd-test-ldap --label test -e "SLAPD_PASSWORD=passwd" -d sequenceiq/docker-ldap:1.0
-docker run --name sssd-test-centos --label test --link sssd-test-ldap:ldap -e "PAYLOAD=ldap ldap://ldap rfc2307 dc=nodomain" -e "BRANCH=" -v $SOURCE_DIR:/consul-plugins-sssd -v $TEMP_DIR:/etc/skel/.ssh -dt centos
+docker run --name sssd-test-centos --label test --link sssd-test-ldap:ldap \
+        -e "PAYLOAD=ldap ldap://ldap rfc2307 dc=nodomain" -e "BRANCH=" -v $SOURCE_DIR:/consul-plugins-sssd -v $TEMP_DIR:/tmp/.ssh -dt centos
 docker exec sssd-test-centos bash -c "yum update -y && /consul-plugins-sssd/sssd-setup"
-docker exec sssd-test-centos bash -c "mkdir /home/binduser && cp -r /etc/skel/.ssh /home/binduser && chown -R binduser:bindgroup /home/binduser"
-IP=$(docker inspect -f "{{.NetworkSettings.IPAddress}}" sssd-test-centos)
-docker run -v $TEMP_DIR:/root/.ssh -it sequenceiq/alpine-dev:3.3 ssh binduser@$IP -p 2022 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "touch ok"
+docker exec sssd-test-centos bash -c "mkdir /home/binduser && cp -r /tmp/.ssh /home/binduser && chown -R binduser:bindgroup /home/binduser"
+docker run --rm --link sssd-test-centos:centos -v $TEMP_DIR/id_rsa:/root/.ssh/id_rsa -it sequenceiq/alpine-dev:3.3 \
+        ssh binduser@centos -p 2022 -i /root/.ssh/id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "touch ok"
 if [[ 0 -ne $? ]]; then
     echo "Something went wrong during integration test, containers are available"
     exit 1
