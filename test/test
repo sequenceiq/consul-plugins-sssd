@@ -9,15 +9,15 @@ rm -rf $TEMP_DIR && mkdir -p -m a-rwx,u+wrx $TEMP_DIR
 SOURCE_DIR=$(cd `dirname "$TEST_DIR/../sssd-setup"` && pwd)
 . $SOURCE_DIR/sssd-setup
 
-config=$(echo "$(get-sssd-conf '%LDAP_URI%%LDAP_SCHEMA%%LDAP_SEARCH_BASE%%KRB5_SERVER%%KRB5_REALM%' ldap://ldap.mydomain.org rfc2307bis dc=eample,dc=com your.kdc.example.com EXAMPLE.COM)")
-if [[ "ldap://ldap.mydomain.orgrfc2307bisdc=eample,dc=comyour.kdc.example.comEXAMPLE.COM" != $config ]]; then
+config=$(echo "$(get-sssd-conf '%LDAP_URI%%LDAP_SCHEMA%%LDAP_SEARCH_BASE%%REQCERT%%AD_SERVER%%KRB5_SERVER%%KRB5_REALM%' ldap://ldap.mydomain.org rfc2307bis dc=eample,dc=com never ad.example.com kdc.example.com EXAMPLE.COM)")
+if [[ "ldap://ldap.mydomain.orgrfc2307bisdc=eample,dc=comneverad.example.comkdc.example.comEXAMPLE.COM" != $config ]]; then
     echo "Generated source is invalid: $config"
     exit 1
 fi
 
 template=$(echo "$(get-template ad)")
 hash=$(echo "$template" | md5)
-if [[ "291d18458d52652e655eac1673ffb7b0" != $hash ]]; then
+if [[ "cc648ce82f5240476b3e52ffb53a7d31" != $hash ]]; then
     echo "Template is invalid: $hash"
     echo "$template"
     exit 1

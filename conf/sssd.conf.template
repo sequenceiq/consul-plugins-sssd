@@ -27,7 +27,7 @@ ldap_uri = %LDAP_URI%
 ldap_schema = %LDAP_SCHEMA%
 ldap_search_base = %LDAP_SEARCH_BASE%
 ldap_auth_disable_tls_never_use_in_production = true
-ldap_tls_reqcert = never
+ldap_tls_reqcert = %REQCERT%
 
 min_id = 1000
 timeout = 10

@@ -7,11 +7,13 @@ CONF_LOCATION="$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/conf"
 
  get-sssd-conf(){
     declare desc="Generates sssd.conf file by the given template"
-    declare template="${1}" uri=${2} schema=${3} search=${4} krb5_server=${5} krb5_realm=${6}
+    declare template="${1}" uri=${2} schema=${3} search=${4} reqcert=${5} ad_server=${6} krb5_server=${7} krb5_realm=${8}
     
     template=${template//%LDAP_URI%/$uri}
     template=${template//%LDAP_SCHEMA%/$schema}
     template=${template//%LDAP_SEARCH_BASE%/$search}
+    template=${template//%REQCERT%/$reqcert}
+    template=${template//%AD_SERVER%/$ad_server}
     template=${template//%KRB5_SERVER%/$krb5_server}
     echo "${template//%KRB5_REALM%/$krb5_realm}"
 }

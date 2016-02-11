@@ -3,7 +3,6 @@ domains = KRB
 [domain/KRB]
 id_provider = ldap
 auth_provider = krb5
-chpass_provider = krb5
 
 krb5_server = %KRB5_SERVER%
 krb5_realm = %KRB5_REALM%

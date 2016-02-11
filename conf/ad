@@ -1,6 +1,7 @@
 domains = AD
 
 [domain/AD]
+ad_server = %AD_SERVER%
 id_provider = ad
 auth_provider = ad
 access_provider = ad
