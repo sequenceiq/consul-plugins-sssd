@@ -9,13 +9,13 @@ rm -rf $TEMP_DIR && mkdir -p -m a-rwx,u+wrx $TEMP_DIR
 SOURCE_DIR=$(cd `dirname "$TEST_DIR/../sssd-setup"` && pwd)
 . $SOURCE_DIR/sssd-setup
 
-config=$(echo "$(get-sssd-conf '%LDAP_URI%%LDAP_SCHEMA%%LDAP_SEARCH_BASE%%REQCERT%%AD_SERVER%%KRB5_SERVER%%KRB5_REALM%' ldap://ldap.mydomain.org rfc2307bis dc=eample,dc=com never ad.example.com kdc.example.com EXAMPLE.COM)")
+config=$(echo "$(_get-sssd-conf '%LDAP_URI%%LDAP_SCHEMA%%LDAP_SEARCH_BASE%%REQCERT%%AD_SERVER%%KRB5_SERVER%%KRB5_REALM%' ldap://ldap.mydomain.org rfc2307bis dc=eample,dc=com never ad.example.com kdc.example.com EXAMPLE.COM)")
 if [[ "ldap://ldap.mydomain.orgrfc2307bisdc=eample,dc=comneverad.example.comkdc.example.comEXAMPLE.COM" != $config ]]; then
     echo "Generated source is invalid: $config"
     exit 1
 fi
 
-template=$(echo "$(get-template ad)")
+template=$(echo "$(_get-template ad)")
 hash=$(echo "$template" | md5)
 if [[ "cc648ce82f5240476b3e52ffb53a7d31" != $hash ]]; then
     echo "Template is invalid: $hash"
@@ -23,9 +23,15 @@ if [[ "cc648ce82f5240476b3e52ffb53a7d31" != $hash ]]; then
     exit 1
 fi
 
-save-configuration $TEMP_DIR "config"
+_save-configuration $TEMP_DIR "config"
 if [[ ! -f $TEMP_DIR/sssd.conf ]] || [[ "config" != "$(cat $TEMP_DIR/sssd.conf)" ]]; then
     echo "Missing or wrong configuration file"
+    exit 1
+fi
+
+third=$(_get 3 "f s t f")
+if [[ "t" != $third ]]; then
+    echo "Cut went wrong: '$third' instead of 't'"
     exit 1
 fi
 
@@ -33,10 +39,10 @@ docker rm -f sssd-test-centos sssd-test-ldap || :
 
 ssh-keygen -t rsa -N "" -f $TEMP_DIR/id_rsa
 cp $TEMP_DIR/id_rsa.pub $TEMP_DIR/authorized_keys
-docker run --name sssd-test-ldap --label test -e "SLAPD_PASSWORD=passwd" -d sequenceiq/docker-ldap:1.0
-docker run --name sssd-test-centos --label test --link sssd-test-ldap:ldap \
-        -e "PAYLOAD=ldap ldap://ldap rfc2307 dc=nodomain" -e "BRANCH=" -v $SOURCE_DIR:/consul-plugins-sssd -v $TEMP_DIR:/tmp/.ssh -dt centos
-docker exec sssd-test-centos bash -c "yum update -y && /consul-plugins-sssd/sssd-setup"
+docker run --name sssd-test-ldap -e "SLAPD_PASSWORD=passwd" -d sequenceiq/docker-ldap:1.0
+docker run --name sssd-test-centos --link sssd-test-ldap:ldap \
+        -e "PAYLOAD=- ldap ldap://ldap rfc2307 dc=nodomain never" -e "BRANCH=" -v $SOURCE_DIR:/consul-plugins-sssd -v $TEMP_DIR:/tmp/.ssh -dt centos:centos7.2.1511
+docker exec sssd-test-centos bash -c "/consul-plugins-sssd/sssd-setup"
 docker exec sssd-test-centos bash -c "mkdir /home/binduser && cp -r /tmp/.ssh /home/binduser && chown -R binduser:bindgroup /home/binduser"
 docker run --rm --link sssd-test-centos:centos -v $TEMP_DIR/id_rsa:/root/.ssh/id_rsa -it sequenceiq/alpine-dev:3.3 \
         ssh binduser@centos -p 2022 -i /root/.ssh/id_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "touch ok"

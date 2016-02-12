@@ -1,11 +1,12 @@
 #!/bin/bash
 
+: ${CONSUL_ADDRESS:="http://consul-8500.service.consul:8500"}
 : ${LOGFILE:=/tmp/sssd.log}
 : ${BRANCH=master}
 
 CONF_LOCATION="$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/conf"
 
- get-sssd-conf(){
+ _get-sssd-conf(){
     declare desc="Generates sssd.conf file by the given template"
     declare template="${1}" uri=${2} schema=${3} search=${4} reqcert=${5} ad_server=${6} krb5_server=${7} krb5_realm=${8}
     
@@ -18,7 +19,7 @@ CONF_LOCATION="$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/conf"
     echo "${template//%KRB5_REALM%/$krb5_realm}"
 }
 
-get-template(){
+_get-template(){
     declare desc="Resolve the right template"
     declare kind=${1} branch=${2}
     
@@ -40,12 +41,19 @@ get-template(){
     echo "$template"
 }
 
-save-configuration(){
+_save-configuration(){
     declare desc="Persists configuration to disk"
     declare location=$1 content="$2"
     
     mkdir -p $1
     echo "$2" > $1/sssd.conf
+}
+
+_get(){
+    declare desc="Cut the member of payload"
+    declare i=$1 payload="$2"
+
+    echo "$payload" | cut -d" " -f $i
 }
 
 debug(){
@@ -56,10 +64,18 @@ main(){
     debug "Install packages"
     yum install -y sssd openssh-server authconfig
     debug "Generate and persist config file"
-    local kind=$(echo "$PAYLOAD" | cut -d" " -f 1)
-    local template=$(get-template $kind $BRANCH)
-    local config=$(get-sssd-conf "$template" $(echo "$PAYLOAD" | sed "s/^$kind //"))
-    save-configuration /etc/sssd "$config"
+    local config_name=$(_get 1 "$PAYLOAD")
+    local config
+    if [[ -z $config_name ]] || [[ "-" = $config_name ]]; then
+        local pl=$PAYLOAD
+        local kind=$(_get 2 "$pl") uri=$(_get 3 "$pl") schema=$(_get 4 "$pl") search=$(_get 5 "$pl") reqcert=$(_get 6 "$pl")
+        local ad_server=$(_get 7 "$pl") krb5_server=$(_get 8 "$pl") krb5_realm=$(_get 9 "$pl")
+        local template=$(_get-template $kind $BRANCH)
+        config=$(_get-sssd-conf "$template" $uri $schema $search $reqcert $ad_server $krb5_server $krb5_realm)
+    else
+        config=$(curl $CONSUL_ADDRESS/v1/kv/$config_name?raw)
+    fi
+    _save-configuration /etc/sssd "$config"
     chown root:root /etc/sssd/sssd.conf
     chmod 0600 /etc/sssd/sssd.conf
     debug "Reconfigure auth"
