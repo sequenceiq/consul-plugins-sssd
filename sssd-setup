@@ -16,6 +16,9 @@ CONF_LOCATION="$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)/conf"
     template=${template//%REQCERT%/$reqcert}
     template=${template//%AD_SERVER%/$ad_server}
     template=${template//%KRB5_SERVER%/$krb5_server}
+    if [[ "$reqcert" != "never" ]]; then
+        template=${template//ldap_auth_disable_tls_never_use_in_production = true/ldap_auth_disable_tls_never_use_in_production = false}
+    fi
     echo "${template//%KRB5_REALM%/$krb5_realm}"
 }
 

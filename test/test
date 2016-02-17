@@ -9,9 +9,21 @@ rm -rf $TEMP_DIR && mkdir -p -m a-rwx,u+wrx $TEMP_DIR
 SOURCE_DIR=$(cd `dirname "$TEST_DIR/../sssd-setup"` && pwd)
 . $SOURCE_DIR/sssd-setup
 
-config=$(echo "$(_get-sssd-conf '%LDAP_URI%%LDAP_SCHEMA%%LDAP_SEARCH_BASE%%REQCERT%%AD_SERVER%%KRB5_SERVER%%KRB5_REALM%' ldap://ldap.mydomain.org rfc2307bis dc=eample,dc=com never ad.example.com kdc.example.com EXAMPLE.COM)")
-if [[ "ldap://ldap.mydomain.orgrfc2307bisdc=eample,dc=comneverad.example.comkdc.example.comEXAMPLE.COM" != $config ]]; then
+config=$(echo "$(_get-sssd-conf '%LDAP_URI%%LDAP_SCHEMA%%LDAP_SEARCH_BASE%%REQCERT%%AD_SERVER%%KRB5_SERVER%%KRB5_REALM%' ldap://ldap.mydomain.org rfc2307bis dc=eample,dc=com try ad.example.com kdc.example.com EXAMPLE.COM)")
+if [[ "ldap://ldap.mydomain.orgrfc2307bisdc=eample,dc=comtryad.example.comkdc.example.comEXAMPLE.COM" != $config ]]; then
     echo "Generated source is invalid: $config"
+    exit 1
+fi
+
+config=$(echo "$(_get-sssd-conf 'ldap_auth_disable_tls_never_use_in_production = true' - - - try)")
+if [[ "ldap_auth_disable_tls_never_use_in_production = false" != $config ]]; then
+    echo "ldap_auth_disable_tls_never_use_in_production not replaced: $config"
+    exit 1
+fi
+
+config=$(echo "$(_get-sssd-conf 'ldap_auth_disable_tls_never_use_in_production = true' - - - never)")
+if [[ "ldap_auth_disable_tls_never_use_in_production = true" != $config ]]; then
+    echo "ldap_auth_disable_tls_never_use_in_production is replaced: $config"
     exit 1
 fi
 
