@@ -1,0 +1,5 @@
+domains = IPA
+
+[domain/IPA]
+id_provider = ipa
+auth_provider = ipa

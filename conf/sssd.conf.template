@@ -29,7 +29,8 @@ ldap_search_base = %LDAP_SEARCH_BASE%
 ldap_auth_disable_tls_never_use_in_production = true
 ldap_tls_reqcert = %REQCERT%
 
-min_id = 1000
+fallback_homedir = /home/%u
+
 timeout = 10
 ldap_network_timeout = 3
 cache_credentials = true
